@@ -1,0 +1,72 @@
+classdef gen_img
+    %IMAGE Summary of this class goes here
+    %   Detailed explanation goes here
+    
+    properties
+        the_array = [];
+        circles = {};
+        current_error = 1000;
+        add_prob = 0.5;
+    end
+    
+    methods
+        function img = gen_img(src)
+            img.the_array = zeros(size(src));
+        end
+        function img = init_circles(img, num)
+            img.circles = cell(1,num);
+             for cnt = 1:num
+                 img.circles{cnt} = circle(img.the_array);
+             end
+        end
+        function img = render(img)
+            for c = img.circles
+                img.the_array = c{1}.render(img.the_array);
+            end
+        end
+        function img = output_image(img)            
+            img = img.limit();
+            image(img.the_array);
+        end
+        function img = limit(img)
+            func = @clip;
+            img.the_array = arrayfun(func, img.the_array);
+        end
+        
+        function img = evolve(img, prob)
+            if (prob<img.add_prob)
+                img = img.add_circle;
+            else
+                pos = ceil(rand*size(img.circles));
+                img = img.pop_circle(pos);
+            end
+        end
+        
+        function img = pop_circle(img, pos)
+            img.circles(pos)=[];
+        end
+        function img = add_circle(img)
+            img.circles = cat(2, img.circles, circle(img.the_array));
+        end
+        function [img, error] = calc_error(img, src)
+            error = mean(mean(mean((img.the_array-src).^2)));
+            img.current_error = error;
+        end
+        
+        function val = lt(a,b)
+            if(a.current_error<b.current_error)
+                val = 1;
+            else
+                val = 0;
+            end
+        end
+        function val = gt(a,b)
+            if(a.current_error>b.current_error)
+                val = 1
+            else
+                val = 0
+            end
+        end
+    end
+end
+
